@@ -7,9 +7,7 @@ import ffmpeg from 'fluent-ffmpeg'
 import { core, subtitle } from './index.js';
 import { scrap } from './scrap.js';
 import { parseJsonToAss } from './subass.js'
-import { createWriteStream, writeFileSync } from 'fs';
-console.log(process.env.BILI_COOKIE)
-
+import { createWriteStream, writeFileSync, mkdirSync, existsSync, readdirSync, rmdirSync, rmSync } from 'fs';
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -93,32 +91,33 @@ there have ${ep_id.length} Episode, choose one: `)
     const gpermission = await permission(video.size)
     if(!gpermission) return rl.close()
 
-    const path = `${title.split(' ').join('_')}_EP-${reps}`
+    const path = `./${title.split(' ').join('_')}/`
+    const temp = path.concat(`temp/EP-${reps}`)
+    makeDir(path.concat('temp'))
     
-    await gbufferr(video.url, path.concat('.mkv'))
-    await gbufferr(audio.url, path.concat('.mp3'))
+    await gbufferr(video.url, temp.concat(`.mp4`))
+    await gbufferr(audio.url, temp.concat(`.mp3`))
 
     console.log('download video is done...')
-    console.log('prepare to merge video and audio. it will be take a long time...')
 
     const sub = await subtitle(vid, episode)
     if(!sub.ass) {
         const JSON = await (await fetch(sub.json)).json()
-        parseJsonToAss(JSON.body, path.concat('.ass'))
+        parseJsonToAss(JSON.body, temp.concat('.ass'))
     }
     else {
         const ass = await (await fetch(sub.ass)).text()
-        writeFileSync(path.concat('.ass'), ass)
+        writeFileSync(temp.concat('.ass'), ass)
     }
 
     try {
-        await merge(path.concat('.mkv'), path.concat('.mp3'), path)
-        console.log('download successfully...')
+        const final = await merge(temp, path.concat(`EP-${reps}.mkv`))
+        console.log(final)
     } catch (e) {
         console.log('ERROR:\n' + e)
-    }  
-    
+    }
     rl.close()
+    clearTemp(path.concat('temp/'))
 
 })()
 
@@ -133,14 +132,26 @@ const gbufferr = async(url, path) => {
             })
     })
 }
-const merge = (vpath, apath, path) => {
+const merge = (temp, path) => {
     return new Promise((res, rej) => {
         ffmpeg()
-            .input(vpath).fps(24).videoCodec('libx264').videoFilters('scale=1280:720')
-            .input(apath).audioCodec('libmp3lame')
-            .outputOptions('-vf subtitles=./' + path.concat('.ass'))
+            .input(temp.concat('.mp4')).videoCodec('copy')
+            .input(temp.concat('.mp3')).audioCodec('copy')
+            .input(temp.concat('.ass')).inputFormat('ass')
+            .on('start', () => {
+                console.log('starting to merge...')
+            })
             .on('error', e => rej('error\n' + e))
-            .save(path.concat('.mkv'))
+            .save(path)
             .on('end', () => res('merging successfully...'))
         })
+}
+
+const makeDir = dir => !existsSync(dir) ? mkdirSync(dir, {recursive: true}) : ''
+const clearTemp = dir => {
+    readdirSync(dir, {withFileTypes: true}).map(item => {
+        if(item.isFile()) {
+            rmSync(dir+item.name)
+        }
+    })
 }
