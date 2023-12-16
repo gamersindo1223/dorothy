@@ -13,7 +13,6 @@
     "cheerio": "^1.0.0-rc.12",
     "fluent-ffmpeg": "^2.1.2",
     "got": "^14.0.0",
-    "node-fetch": "^3.3.2",
-    "subsrt": "^1.1.1"
+    "node-fetch": "^3.3.2"
   }
 }

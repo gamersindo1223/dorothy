@@ -1,13 +1,13 @@
 import * as readline from 'readline';
+import { createWriteStream, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync } from 'fs';
 
 import fetch from 'node-fetch'
 import ffmpeg from 'fluent-ffmpeg'
 
-
 import { core, subtitle } from './index.js';
 import { scrap } from './scrap.js';
 import { parseJsonToAss } from './subass.js'
-import { createWriteStream, writeFileSync, mkdirSync, existsSync, readdirSync, rmdirSync, rmSync } from 'fs';
+import { validLink, config } from './bitv.js'
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -24,13 +24,12 @@ function input(param) {
 
 async function glink() {
     const greq = await input('input the link: ')
-    const reg = /https:\/\/(bili.im\/\w{7}$)/
 
     const errorms = ['the link you input is invalid!!!...try again', 'link is incorrect!!!', 'the link is not from bilibli/bstation', 'you must check again the link you`are inputting']
     const random_erm = random_error(errorms)
-    if(!reg.test(greq)) {
+    if(!validLink.test(greq)) {
         console.log(`${random_erm}\n`)
-        return glink()
+        return await glink()
     }
     return greq
 }
@@ -76,29 +75,34 @@ async function permission(quality) {
 
 (async() => {
     const rlink = await glink()
-    const { title, vid, ep_id} = await scrap(rlink)
+    const { title, vid, ep_id, ep } = await scrap(rlink)
+    if(ep_id.length == 1) {
+        // ()
+    }
     
-    const gid = await input(`\nAnime: ${title}
-there have ${ep_id.length} Episode, choose one: `)
-    const reps = await geps(gid, ep_id)
-    const episode = ep_id[reps-1]
+    const gid = Array.isArray(ep_id) ? await input(`\nAnime: ${title}
+there have ${ep_id.length} Episode, choose one: `) : console.log(`\nAnime: ${title} Episode: ${ep}`)
+    const reps = ep || await geps(gid, ep_id)
+    const episode = ep ? ep_id : ep_id[reps-1]
 
     const response = await core(vid, episode)
     
-    const quality = await gquality(response.video)
+    const quality = config.bitrate || await gquality(response.video)
     const video = response.video.find(m => m.bitrate.includes(quality))
     const audio = response.audio.find(m => m.quality == video.audio)
-    const gpermission = await permission(video.size)
+    const gpermission = config.permission || await permission(video.size)
     if(!gpermission) return rl.close()
 
-    const path = `./${title.split(' ').join('_')}/`
+    const path = `./download/${title.split(' ').join('_')}/`
     const temp = path.concat(`temp/EP-${reps}`)
     makeDir(path.concat('temp'))
+    
+    console.log('start to download the video...')
     
     await gbufferr(video.url, temp.concat(`.mp4`))
     await gbufferr(audio.url, temp.concat(`.mp3`))
 
-    console.log('download video is done...')
+    console.log('download successfully...')
 
     const sub = await subtitle(vid, episode)
     if(!sub.ass) {
@@ -127,9 +131,9 @@ const gbufferr = async(url, path) => {
     const response = await fetch(url)
     return new Promise(res => {
         response.body.pipe(createWriteStream(path))
-            .on('finish', () => {
-                res('download successfully...')
-            })
+        .on('finish', () => {
+            res('download successfully...')
+        })
     })
 }
 const merge = (temp, path) => {
