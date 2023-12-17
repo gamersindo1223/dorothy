@@ -17,7 +17,7 @@ export async function scrap(url) {
     if(epId) {
         ep_list.vid = vid;
         ep_list.ep_id = epId
-        $('.ep-list a').each((i, el) => ep_list.ep = $(el).attr('href', epId).text().replace('E', ''))
+        $('.ep-list a').each((i, el) => ep_list.ep = ($(el).attr('href')).includes(epId) ? $(el).attr('href', epId).text().replace('E', '') : ep_list.ep)
         ep_list.ep = parseInt(ep_list.ep)
         return ep_list
     }
