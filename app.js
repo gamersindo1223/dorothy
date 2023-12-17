@@ -57,15 +57,18 @@ async function gquality(video) {
     let qstring = ''
     for(const [i, dvideo] of video.entries()) {
         if(dvideo.url.length <= 1)continue
-
-        if((i + 1) % 2 == 0) {qstring += `[${dvideo.bitrate}]\n`; continue}
+        if(i % 2 == 0) {qstring += `[${dvideo.bitrate}]\n`; continue}
         qstring += `[${dvideo.bitrate}] `
     }
     const quality = await input(`quality video:\n${qstring} \ninput the quality video: `)
-    return quality
+    if(!qstring.includes(quality, 1))return await gquality(video)
+    return quality.toLowerCase()
 }
 
 async function permission(quality) {
+
+    if(config.permission) {console.log(`the video size is around ${Math.floor(quality / 1024)/ 1000}Mb\n`); return true}
+
     const prefix = ['y', 'n']
     const answer = await input(`the video size is around ${Math.floor(quality / 1024)/ 1000}Mb\n[y/n]: `)
     if(prefix[0] == answer) return true
@@ -76,9 +79,6 @@ async function permission(quality) {
 (async() => {
     const rlink = await glink()
     const { title, vid, ep_id, ep } = await scrap(rlink)
-    if(ep_id.length == 1) {
-        // ()
-    }
     
     const gid = Array.isArray(ep_id) ? await input(`\nAnime: ${title}
 there have ${ep_id.length} Episode, choose one: `) : console.log(`\nAnime: ${title} Episode: ${ep}`)
@@ -90,10 +90,11 @@ there have ${ep_id.length} Episode, choose one: `) : console.log(`\nAnime: ${tit
     const quality = config.bitrate || await gquality(response.video)
     const video = response.video.find(m => m.bitrate.includes(quality))
     const audio = response.audio.find(m => m.quality == video.audio)
-    const gpermission = config.permission || await permission(video.size)
+    const gpermission = await permission(video.size)
     if(!gpermission) return rl.close()
 
-    const path = `./download/${title.split(' ').join('_')}/`
+    const specialCase = title.match(/(?:"(.+)")/)
+    const path = `./download/${title.split(' ').join('_').replace(':', '').replace(specialCase[0], specialCase[1])}/`
     const temp = path.concat(`temp/EP-${reps}`)
     makeDir(path.concat('temp'))
     
@@ -121,7 +122,7 @@ there have ${ep_id.length} Episode, choose one: `) : console.log(`\nAnime: ${tit
         console.log('ERROR:\n' + e)
     }
     rl.close()
-    clearTemp(path.concat('temp/'))
+    // clearTemp(path.concat('temp/'))
 
 })()
 
