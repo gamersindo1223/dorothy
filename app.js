@@ -6,7 +6,7 @@ import ffmpeg from 'fluent-ffmpeg'
 
 import { core, subtitle } from './index.js';
 import { scrap } from './scrap.js';
-import { parseJsonToAss } from './subass.js'
+import { parseJsonToAss, fixAss } from './subass.js'
 import { validLink, config } from './bitv.js'
 
 const rl = readline.createInterface({
@@ -93,7 +93,7 @@ there have ${ep_id.length} Episode, choose one: `) : console.log(`\nAnime: ${tit
     const gpermission = await permission(video.size)
     if(!gpermission) return rl.close()
 
-    const specialCase = title.match(/(?:"(.+)")/)
+    const specialCase = title.match(/(?:"(.+)")/) || ''
     const path = `./download/${title.split(' ').join('_').replace(':', '').replace(specialCase[0], specialCase[1])}/`
     const temp = path.concat(`temp/EP-${reps}`)
     makeDir(path.concat('temp'))
@@ -112,7 +112,7 @@ there have ${ep_id.length} Episode, choose one: `) : console.log(`\nAnime: ${tit
     }
     else {
         const ass = await (await fetch(sub.ass)).text()
-        writeFileSync(temp.concat('.ass'), ass)
+        fixAss(ass, temp.concat('.ass'))
     }
 
     try {
@@ -122,8 +122,7 @@ there have ${ep_id.length} Episode, choose one: `) : console.log(`\nAnime: ${tit
         console.log('ERROR:\n' + e)
     }
     rl.close()
-    // clearTemp(path.concat('temp/'))
-
+    clearTemp(path.concat('temp/'))
 })()
 
 
