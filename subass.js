@@ -1,13 +1,13 @@
-import { readFileSync, writeFileSync } from 'fs'
+import { writeFileSync } from 'fs'
 
-export const desc = `[Script Info]
+const desc = `[Script Info]
 Title: Bilibili Subtitle
 ScriptType: v4.00+
 WrapStyle: 0
 ScaledBorderAndShadow: yes
 YCbCr Matrix: TV.601
-PlayResX: 1920
-PlayResY: 1080`
+PlayResX: 3840
+PlayResY: 2160`
 
 const style = `[V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
