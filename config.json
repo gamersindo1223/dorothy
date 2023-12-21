@@ -1,7 +1,8 @@
 {
   "lang": "id",
   "s_locale": "id_ID",
-  "bitrate": null,
+  "bitrate": "string",
   "account": "",
-  "permission": true
+  "permission": true,
+  "fs": "100"
 }

@@ -1,5 +1,8 @@
 import { writeFileSync } from 'fs'
 
+import { config } from './bitv.js'
+const { fs } = config
+
 const desc = `[Script Info]
 Title: Bilibili Subtitle
 ScriptType: v4.00+
@@ -11,8 +14,8 @@ PlayResY: 2160`
 
 const style = `[V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Noto Sans,100,&H00FFFFFF,&H00FFFFFF,&H00002208,&H80000000,-1,0,0,0,100,100,0,0,1,5,1.5,2,96,96,65,1
-Style: Default - atas,Noto Sans,100,&H00FFFFFF,&H00FFFFFF,&H00002208,&H80000000,-1,0,0,0,100,100,0,0,1,5,1.5,8,96,96,65,1\n\n`
+Style: Default,Noto Sans,${fs},&H00FFFFFF,&H00FFFFFF,&H00002208,&H80000000,-1,0,0,0,100,100,0,0,1,5,1.5,2,96,96,65,1
+Style: Default - atas,Noto Sans,${fs},&H00FFFFFF,&H00FFFFFF,&H00002208,&H80000000,-1,0,0,0,100,100,0,0,1,5,1.5,8,96,96,65,1\n\n`
 
 let events = `[Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`
@@ -30,8 +33,8 @@ export function parseJsonToAss(JSON, path ) {
 }
 
 const fix_fs = style_str => {
-    const style_fs = style_str.replaceAll(/Noto Sans,(\d+),/g, 'Noto Sans,100,')
-    const fs_style = style_fs.replaceAll(/fs\d+/g, 'fs100')
+    const style_fs = style_str.replaceAll(/Noto Sans,(\d+),/g, `Noto Sans,${fs},`)
+    const fs_style = style_fs.replaceAll(/fs\d+/g, 'fs'+ fs)
     return fs_style
 }
 
